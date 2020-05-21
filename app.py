@@ -111,7 +111,9 @@ app.jinja_env.filters['datetime'] = format_datetime
 def index():
     return render_template('pages/home.html')
 
-
+# Time Compare
+def time_comp(timenow, time):
+    return 'upcoming_shows' if time >= timenow else 'past_shows'
 #  Venues
 #  ----------------------------------------------------------------
 
@@ -132,117 +134,79 @@ def venues():
         }
         venue_data = Venue.query.filter(
             Venue.city == place.city, Venue.state == place.state).all()
-        num_upcoming_shows = db.session.query(func.count(Show.id)).filter(
-            Show.start_time > timenow).all()
+
         for vn in venue_data:
+            num_upcoming_shows = db.session.query(func.count(Show.id)).filter(
+                Show.start_time > timenow, Show.venue_id == vn.id).all()
             data_entry['venues'].append({
                 "id": vn.id,
                 "name": vn.name,
                 "num_upcoming_shows": num_upcoming_shows,
             })
         data.append(data_entry)
-    return render_template('pages/venues.html', areas = data)
+    return render_template('pages/venues.html', areas=data)
 
 
-@ app.route('/venues/search', methods = ['POST'])
+@ app.route('/venues/search', methods=['POST'])
 def search_venues():
     # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-    response={
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
+    timenow = datetime.now()
+    venues = db.session.query(Venue).filter(Venue.name.ilike('%'+ request.form.get('search_term') +'%')).all()
+    response = {
+        "count": 0,
+        "data": []
     }
-    return render_template('pages/search_venues.html', results = response, search_term = request.form.get('search_term', ''))
+
+    for venue in venues:
+        num_upcoming_shows = db.session.query(func.count(Show.id)).filter(
+            Show.start_time > timenow, Show.venue_id == venue.id).all()
+        response['count'] = response.get('count') + 1
+        response['data'].append({
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": num_upcoming_shows,
+        })
+
+    return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 
 @ app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
     # TODO: replace with real venue data from the venues table, using venue_id
-    data1={
-        "id": 1,
-        "name": "The Musical Hop",
-        "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-        "address": "1015 Folsom Street",
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "123-123-1234",
-        "website": "https://www.themusicalhop.com",
-        "facebook_link": "https://www.facebook.com/TheMusicalHop",
-        "seeking_talent": True,
-        "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-        "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-        "past_shows": [{
-            "artist_id": 4,
-            "artist_name": "Guns N Petals",
-            "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-            "start_time": "2019-05-21T21:30:00.000Z"
-        }],
-        "upcoming_shows": [],
-        "past_shows_count": 1,
-        "upcoming_shows_count": 0,
-    }
-    data2={
-        "id": 2,
-        "name": "The Dueling Pianos Bar",
-        "genres": ["Classical", "R&B", "Hip-Hop"],
-        "address": "335 Delancey Street",
-        "city": "New York",
-        "state": "NY",
-        "phone": "914-003-1132",
-        "website": "https://www.theduelingpianos.com",
-        "facebook_link": "https://www.facebook.com/theduelingpianos",
-        "seeking_talent": False,
-        "image_link": "https://images.unsplash.com/photo-1497032205916-ac775f0649ae?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=750&q=80",
+    venue = Venue.query.filter(Venue.id == venue_id).one()
+    data = {
+        "id": venue_id,
+        "name": venue.name,
+        "genres": venue.genres,
+        "address": venue.address,
+        "city": venue.city,
+        "state": venue.state,
+        "phone": venue.phone,
+        "website": venue.website,
+        "facebook_link": venue.facebook_link,
+        "seeking_talent": venue.seeking_talent,
+        "seeking_description": venue.seeking_description,
+        "image_link": venue.image_link,
         "past_shows": [],
         "upcoming_shows": [],
         "past_shows_count": 0,
         "upcoming_shows_count": 0,
     }
-    data3={
-        "id": 3,
-        "name": "Park Square Live Music & Coffee",
-        "genres": ["Rock n Roll", "Jazz", "Classical", "Folk"],
-        "address": "34 Whiskey Moore Ave",
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "415-000-1234",
-        "website": "https://www.parksquarelivemusicandcoffee.com",
-        "facebook_link": "https://www.facebook.com/ParkSquareLiveMusicAndCoffee",
-        "seeking_talent": False,
-        "image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-        "past_shows": [{
-            "artist_id": 5,
-            "artist_name": "Matt Quevedo",
-            "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-            "start_time": "2019-06-15T23:00:00.000Z"
-        }],
-        "upcoming_shows": [{
-            "artist_id": 6,
-            "artist_name": "The Wild Sax Band",
-            "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-            "start_time": "2035-04-01T20:00:00.000Z"
-        }, {
-            "artist_id": 6,
-            "artist_name": "The Wild Sax Band",
-            "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-            "start_time": "2035-04-08T20:00:00.000Z"
-        }, {
-            "artist_id": 6,
-            "artist_name": "The Wild Sax Band",
-            "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-            "start_time": "2035-04-15T20:00:00.000Z"
-        }],
-        "past_shows_count": 1,
-        "upcoming_shows_count": 1,
-    }
-    data=list(filter(lambda d: d['id'] ==
-                       venue_id, [data1, data2, data3]))[0]
+    timenow = datetime.now()
+    artists = db.session.query(Artist.id, Artist.name, Artist.image_link, Show.start_time.label('time')).filter(Show.venue_id == venue.id).all()
+    for artist in artists:
+        show = time_comp(timenow, artist.time)
+        data[show].append({
+            "artist_id": artist.id,
+            "artist_name": artist.name,
+            "artist_image_link": artist.image_link,
+            "start_time": str(artist.time)
+        })
+        data[show + '_count'] = data.get(show + '_count') + 1
+
     return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -251,7 +215,7 @@ def show_venue(venue_id):
 
 @ app.route('/venues/create', methods=['GET'])
 def create_venue_form():
-    form=VenueForm()
+    form = VenueForm()
     return render_template('forms/new_venue.html', form=form)
 
 
@@ -284,7 +248,7 @@ def delete_venue(venue_id):
 @ app.route('/artists')
 def artists():
     # TODO: replace with real data returned from querying the database
-    data=[{
+    data = [{
         "id": 4,
         "name": "Guns N Petals",
     }, {
@@ -398,8 +362,8 @@ def show_artist(artist_id):
 
 @ app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-    form=ArtistForm()
-    artist={
+    form = ArtistForm()
+    artist = {
         "id": 4,
         "name": "Guns N Petals",
         "genres": ["Rock n Roll"],
@@ -421,13 +385,13 @@ def edit_artist_submission(artist_id):
     # TODO: take values from the form submitted, and update existing
     # artist record with ID <artist_id> using the new attributes
 
-    return redirect(url_for('show_artist', artist_id = artist_id))
+    return redirect(url_for('show_artist', artist_id=artist_id))
 
 
 @ app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-    form=VenueForm()
-    venue={
+    form = VenueForm()
+    venue = {
         "id": 1,
         "name": "The Musical Hop",
         "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
@@ -449,7 +413,7 @@ def edit_venue(venue_id):
 def edit_venue_submission(venue_id):
     # TODO: take values from the form submitted, and update existing
     # venue record with ID <venue_id> using the new attributes
-    return redirect(url_for('show_venue', venue_id = venue_id))
+    return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
 #  ----------------------------------------------------------------
@@ -457,7 +421,7 @@ def edit_venue_submission(venue_id):
 
 @ app.route('/artists/create', methods=['GET'])
 def create_artist_form():
-    form=ArtistForm()
+    form = ArtistForm()
     return render_template('forms/new_artist.html', form=form)
 
 
@@ -482,7 +446,7 @@ def shows():
     # displays list of shows at /shows
     # TODO: replace with real venues data.
     #       num_shows should be aggregated based on number of upcoming shows per venue.
-    data=[{
+    data = [{
         "venue_id": 1,
         "venue_name": "The Musical Hop",
         "artist_id": 4,
