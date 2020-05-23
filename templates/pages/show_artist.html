@@ -5,6 +5,10 @@
 	<div class="col-sm-6">
 		<h1 class="monospace">
 			{{ artist.name }}
+			<div style="display: inline-block;">
+				<button class="edit-art-button" id="edartBtn_venue" data-id="{{ artist.id }}">Edit</button>
+				<button class="delete-art-button" id="dlartBtn_venue" data-id="{{ artist.id }}">Delete</button>
+			</div>
 		</h1>
 		<p class="subtitle">
 			ID: {{ artist.id }}

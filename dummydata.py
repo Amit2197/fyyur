@@ -108,48 +108,49 @@ show_data = [{
 }]
 
 
-def dummy_data():
+def dummy_venue_data():
     error = False
     try:
         venue_data = [venue_data1, venue_data2, venue_data3]
-        artist_data = [artist_data1, artist_data2, artist_data3]
-        try:
-            for data in venue_data:
-                vn = Venue(**data)
-                db.session.add(vn)
-                db.session.commit()
-        except:
-            error = True
-            db.session.rollback()
-            print(f'Venue: {sys.exc_info()}')
-        try:
-            for data in artist_data:
-                ar = Artist(**data)
-                db.session.add(ar)
-                db.session.commit()
-        except:
-            error = True
-            db.session.rollback()
-            print(f'Artist: {sys.exc_info()}')
-        if not error:
-            try:
-                for data in show_data:
-                    sh = Show(**data)
-                    db.session.add(sh)
-                    db.session.commit()
-                print("data successfully created")
-            except:
-                error = True
-                db.session.rollback()
-                print(f'Show: {sys.exc_info()}')
+        for data in venue_data:
+            vn = Venue(**data)
+            db.session.add(vn)
+            db.session.commit()
     except:
         error = True
         db.session.rollback()
+        print(f'Venue: {sys.exc_info()}')
     finally:
         db.session.close()
-    
-        
 
-        
 
-dummy_data()
+def dummy_artist_data():
+    error = False
+    try:
+        artist_data = [artist_data1, artist_data2, artist_data3]
+        for data in artist_data:
+            ar = Artist(**data)
+            db.session.add(ar)
+            db.session.commit()
+    except:
+        error = True
+        db.session.rollback()
+        print(f'Artist: {sys.exc_info()}')
+    finally:
+        db.session.close()
+
+
+def dummy_show_data():
+    error = False
+    try:
+        for data in show_data:
+            sh = Show(**data)
+            db.session.add(sh)
+            db.session.commit()
+            print("data successfully created")
+    except:
+        error = True
+        db.session.rollback()
+        print(f'Show: {sys.exc_info()}')
+    finally:
+        db.session.close()

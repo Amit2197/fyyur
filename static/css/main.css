@@ -209,3 +209,30 @@ h2.monospace {
 .subtitle {
   opacity: 0.5;
 }
+/* 
+.item ul{
+  list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 200px;
+
+}
+.items li {
+  clear: both;
+}
+
+.items li button {
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  color: red;
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.lists_wrapper,
+.venue_wrapper {
+  display: inline-block;
+  vertical-align: top;
+} */
